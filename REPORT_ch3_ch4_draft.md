@@ -76,7 +76,17 @@ own phone photos to data/own_photos/ and rerun
 `python scripts/generalization_test.py` — expect minor drop on unseen camera
 angles; document 2-3 failure cases honestly.
 
-### 4.5 Limitations & future work
+### 4.5 Cap-confusion experiment (negative result, kept as evidence)
+YouTube field test showed cloth caps / bucket hats firing as `helmet`
+(open-set problem: only helmet/head classes exist, so head-coverings default
+to helmet). Attempted fix: 217 cap crops mined from the test video added as
+background images + 25-epoch fine-tune. Result on the same video:
+helmet boxes 2093->2480, head boxes 987->551 — calibration shifted, caps
+still detected as helmets. Conclusion: background-only fine-tuning is
+insufficient; the correct fix is a 3rd `cap` class with annotated boxes
+(proposed future work). Base YOLO11s retained as final model.
+
+### 4.6 Limitations & future work
 No full-body person class (heads only) — tracking is head-level, loses
 workers when heads occluded. No vest/goggles classes. Zone is a static
 rectangle — future: polygon zones per camera + perspective calibration. Edge
