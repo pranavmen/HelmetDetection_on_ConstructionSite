@@ -1,0 +1,13 @@
+__pycache__/
+runs/
+weights/
+data/
+*.pt
+*.onnx
+*.engine
+*.mp4
+*.avi
+violations/
+violations.db
+.env
+venv/

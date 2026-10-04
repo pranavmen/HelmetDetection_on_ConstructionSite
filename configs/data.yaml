@@ -1,0 +1,10 @@
+# SHWD-style PPE dataset (Kaggle mustafatayyipbayram/ppe-detection, 7035 imgs)
+# Verified visually: 0=head(no-helmet), 1=helmet. Original SHWD VOC uses hat/person names.
+path: ../data/shwd
+train: train/images
+val: val/images
+test: test/images
+
+names:
+  0: head     # no-helmet
+  1: helmet
