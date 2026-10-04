@@ -81,6 +81,8 @@ REPORT_ch3_ch4_draft.md    # report Chapters 3-4 draft
 ```
 
 ## Notes
-- `data/`, `runs/`, `*.pt` are git-ignored. Train with the commands above to reproduce weights.
+- `weights/yolo11s_shwd_best.pt` (19MB) is included - clone and run the demo directly:
+  `streamlit run app/streamlit_app.py` (set weights path to `weights/yolo11s_shwd_best.pt`).
+- `data/`, `runs/`, other `*.pt` are git-ignored. Retrain with the commands above to reproduce.
 - Put your own site photos in `data/own_photos/` and rerun `generalization_test.py`.
 - Demo: image / video-file mode is the reliable path; webcam needs a local camera.
