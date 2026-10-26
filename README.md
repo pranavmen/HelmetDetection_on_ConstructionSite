@@ -37,15 +37,15 @@ train 3688 / val 1581 / test 1766. Classes verified visually: `0=head (no-helmet
 
 ## Pipeline
 ```
-CCTV / webcam / video -> YOLO11s detector -> ByteTrack IDs -> zone + dwell check
-  -> SQLite violation log + snapshot -> Streamlit dashboard
+CCTV / webcam / video / image -> YOLO11s detector -> ByteTrack IDs -> zone + dwell check
+  -> SQLite violation log + snapshot -> Flask API + one-page web dashboard (frontend/)
 ```
 
 ## Quickstart
 ```powershell
 python -m venv venv; .\venv\Scripts\activate
 python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-python -m pip install ultralytics opencv-python streamlit pandas pillow pyyaml tqdm
+python -m pip install ultralytics opencv-python flask pandas pillow pyyaml tqdm lapx imageio-ffmpeg
 
 # dataset: Kaggle mustafatayyipbayram/ppe-detection -> data/downloads -> normalize
 python scripts/prepare_shwd.py   # or place data manually under data/shwd/{train,val,test}
@@ -59,13 +59,14 @@ python src/evaluate.py --weights runs/train/yolo11s_shwd/weights/best.pt
 # test-split generalization + sample predictions
 python scripts/generalization_test.py
 
-# live demo
-streamlit run app/streamlit_app.py
+# live demo — one-page dashboard (detection, live camera, video analysis, evidence log)
+python server.py            # then open http://localhost:8000
 ```
 
 ## Structure
 ```
-app/streamlit_app.py       # live demo + violation dashboard
+server.py                  # Flask API: image/live/video detection + evidence endpoints
+frontend/                  # one-page dashboard (index.html, style.css, app.js)
 src/train.py               # training (RTX 3050 safe defaults)
 src/evaluate.py            # mAP + FPS benchmark
 src/detect.py              # image / video / webcam inference
@@ -82,7 +83,7 @@ REPORT_ch3_ch4_draft.md    # report Chapters 3-4 draft
 
 ## Notes
 - `weights/yolo11s_shwd_best.pt` (19MB) is included - clone and run the demo directly:
-  `streamlit run app/streamlit_app.py` (set weights path to `weights/yolo11s_shwd_best.pt`).
+  `python server.py`, then open `http://localhost:8000`.
 - `data/`, `runs/`, other `*.pt` are git-ignored. Retrain with the commands above to reproduce.
 - Put your own site photos in `data/own_photos/` and rerun `generalization_test.py`.
 - Demo: image / video-file mode is the reliable path; webcam needs a local camera.

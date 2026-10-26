@@ -9,5 +9,6 @@ data/
 *.avi
 violations/
 violations.db
+media/
 .env
 venv/

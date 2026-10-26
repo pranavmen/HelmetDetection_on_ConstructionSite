@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HardHat Vision — Helmet Detection for Construction Sites</title>
+<meta name="description" content="Real-time helmet detection on construction sites using YOLO11 + ByteTrack.">
+<link rel="stylesheet" href="/static/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛑️</text></svg>">
+</head>
+<body>
+
+<!-- ============================== NAV ============================== -->
+<nav class="nav">
+  <a class="brand" href="#top">
+    <svg viewBox="0 0 48 48" class="brand-icon" aria-hidden="true">
+      <path d="M24 6c-8 0-14 5.5-14 13v6h5v13h18V25h5v-6c0-7.5-6-13-14-13z" fill="#ffd21e"/>
+      <rect x="6" y="27" width="36" height="6" rx="3" fill="#ff9e00"/>
+      <path d="M24 6v21" stroke="#111" stroke-width="2.5"/>
+    </svg>
+    <span class="brand-name">HARDHAT<b>VISION</b></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#demo">Live Demo</a></li>
+    <li><a href="#video">Video Analysis</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#performance">Results</a></li>
+  </ul>
+  <div class="server-status" id="serverStatus" title="Model status">
+    <span class="dot dot-loading"></span><span id="serverStatusText">loading model…</span>
+  </div>
+</nav>
+
+<!-- ============================== HERO ============================== -->
+<header class="hero" id="top">
+  <div class="hero-bg"></div>
+  <div class="hero-inner">
+    <h1>Helmet detection that alerts<br><em>only when it matters</em></h1>
+  </div>
+</header>
+
+<main>
+
+<!-- ============================== LIVE DEMO ============================== -->
+<section class="section" id="demo">
+  <div class="section-head">
+    <span class="section-tag">01 · INTERACTIVE</span>
+    <h2>Live Detection Demo</h2>
+  </div>
+
+  <div class="demo-grid">
+    <!-- ---------- viewer ---------- -->
+    <div class="panel viewer-panel">
+      <div class="viewer-toolbar">
+        <span class="section-tag">UPLOAD &amp; DETECT</span>
+        <div class="viewer-meta">
+          <span class="chip chip-hidden" id="inferChip">— ms</span>
+        </div>
+      </div>
+
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="canvas" width="640" height="640"></canvas>
+        <div class="canvas-loading hidden" id="canvasLoading"><div class="spinner"></div><span>detecting…</span></div>
+        <div class="drop-overlay hidden" id="dropOverlay">
+          <div class="drop-inner">
+            <div class="drop-icon">⬆</div>
+            <b>Drop an image here</b>
+            <span>jpg / png</span>
+          </div>
+        </div>
+        <div class="empty-hint" id="emptyHint">Choose an image below or drag &amp; drop onto the canvas.</div>
+      </div>
+
+      <div class="viewer-footer">
+        <div class="upload-row" id="uploadRow">
+          <label class="btn btn-primary btn-small">
+            Choose image<input type="file" id="fileInput" accept="image/*" hidden>
+          </label>
+          <span class="muted">jpg / png · detection runs on the local server</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- controls / stats ---------- -->
+    <div class="panel side-panel">
+      <div class="stats-grid">
+        <div class="stat stat-helmet"><span class="stat-num" id="stHelmet">0</span><span class="stat-label">⛑ Helmets</span></div>
+        <div class="stat stat-head"><span class="stat-num" id="stHead">0</span><span class="stat-label">✕ Bare heads</span></div>
+        <div class="stat stat-viol"><span class="stat-num" id="stViol">0</span><span class="stat-label">⛔ Violations</span></div>
+      </div>
+
+      <div class="controls">
+        <div class="control">
+          <label>Confidence threshold <b id="confVal">0.50</b></label>
+          <input type="range" id="confSlider" min="0.1" max="0.9" step="0.05" value="0.5">
+        </div>
+      </div>
+
+      <div class="det-head">
+        <h3>Detections</h3>
+        <span class="muted" id="detCount">0 objects</span>
+      </div>
+      <div class="det-list" id="detList">
+        <div class="det-empty">No detections yet.</div>
+      </div>
+      <div class="legend">
+        <span><i class="sw sw-helmet"></i>helmet</span>
+        <span><i class="sw sw-head"></i>bare head</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== VIDEO ============================== -->
+<section class="section section-alt" id="video">
+  <div class="section-head">
+    <span class="section-tag">02 · FULL PIPELINE</span>
+    <h2>Video Analysis</h2>
+  </div>
+
+  <div class="video-grid">
+    <div class="panel">
+      <div class="video-drop" id="videoDrop">
+        <div class="drop-icon">🎬</div>
+        <b>Drop a video or click to browse</b>
+        <span>mp4 · mov · avi · mkv — up to 200 MB</span>
+        <input type="file" id="videoInput" accept="video/*" hidden>
+      </div>
+      <div class="file-chip hidden" id="videoFileChip"><span id="videoFileName"></span><button id="videoClear" title="Remove">✕</button></div>
+
+      <div class="video-controls">
+        <button class="btn btn-primary" id="videoRun" disabled>⚡ Analyze video</button>
+        <span class="muted small">violations fire after a bare head stays in the zone for 3 s</span>
+      </div>
+
+      <div class="progress hidden" id="videoProgress">
+        <div class="progress-top"><span id="videoStatusText">Starting…</span><b id="videoPct">0%</b></div>
+        <div class="bar"><i id="videoBar"></i></div>
+        <div class="progress-sub muted" id="videoSub"></div>
+      </div>
+    </div>
+
+    <div class="panel hidden" id="videoResult">
+      <div class="result-head">
+        <h3>Annotated result</h3>
+        <span class="chip chip-ok" id="videoViolCount">0 violations</span>
+      </div>
+      <video id="resultVideo" controls muted playsinline></video>
+      <ul class="result-violations" id="videoViolList"></ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== HOW IT WORKS ============================== -->
+<section class="section" id="how">
+  <div class="section-head">
+    <span class="section-tag">03 · METHODOLOGY</span>
+    <h2>How It Works</h2>
+  </div>
+
+  <div class="pipeline">
+    <div class="pipe-step"><div class="pipe-num">1</div><div class="pipe-ico">📷</div><b>CCTV / Webcam</b></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="pipe-num">2</div><div class="pipe-ico">🧠</div><b>YOLO11s detector</b></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="pipe-num">3</div><div class="pipe-ico">🆔</div><b>ByteTrack IDs</b></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step pipe-hot"><div class="pipe-num">4</div><div class="pipe-ico">⏱</div><b>Zone + dwell rule</b></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="pipe-num">5</div><div class="pipe-ico">🗄</div><b>SQLite snapshot</b></div>
+  </div>
+</section>
+
+<!-- ============================== PERFORMANCE ============================== -->
+<section class="section section-alt" id="performance">
+  <div class="section-head">
+    <span class="section-tag">04 · EVALUATION</span>
+    <h2>Model Performance</h2>
+  </div>
+
+  <div class="metric-cards">
+    <div class="metric"><b>0.948</b><span>Val mAP50</span></div>
+    <div class="metric"><b>0.961</b><span>Test mAP50</span></div>
+    <div class="metric"><b>0.941</b><span>Test precision</span></div>
+    <div class="metric"><b>0.920</b><span>Test recall</span></div>
+    <div class="metric"><b>0.626</b><span>Val mAP50-95</span></div>
+  </div>
+
+  <div class="tables-grid">
+    <div class="panel">
+      <h3>Validation split <span class="muted">(1581 images)</span></h3>
+      <table class="table">
+        <thead><tr><th>Class</th><th>Precision</th><th>Recall</th><th>mAP50</th><th>mAP50-95</th></tr></thead>
+        <tbody>
+          <tr><td><i class="dot-lg" style="background:#2ed573"></i>helmet</td><td>0.945</td><td>0.932</td><td>0.973</td><td>0.652</td></tr>
+          <tr><td><i class="dot-lg" style="background:#ff4757"></i>head</td><td>0.909</td><td>0.869</td><td>0.922</td><td>0.601</td></tr>
+          <tr class="tr-total"><td>all</td><td>0.927</td><td>0.900</td><td>0.948</td><td>0.626</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h3>Ablation — YOLOv8s vs YOLO11s</h3>
+      <table class="table">
+        <thead><tr><th>Model</th><th>P</th><th>R</th><th>mAP50</th><th>mAP50-95</th><th>Params</th><th>Weights</th><th>FPS</th></tr></thead>
+        <tbody>
+          <tr class="tr-total"><td>YOLO11s ★</td><td>0.927</td><td>0.900</td><td>0.948</td><td>0.626</td><td>9.4M</td><td>19MB</td><td>31</td></tr>
+          <tr><td>YOLOv8s</td><td>0.919</td><td>0.907</td><td>0.944</td><td>0.620</td><td>11.1M</td><td>22.5MB</td><td>76</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="dataset-row">
+    <div class="panel ds"><b>7,035</b><span>images — SHWD-style PPE dataset</span></div>
+    <div class="panel ds"><b>3688 / 1581 / 1766</b><span>train / val / test · 640px</span></div>
+    <div class="panel ds"><b>14,087 / 4,169</b><span>train instances: helmet / head</span></div>
+  </div>
+</section>
+
+</main>
+
+<div class="toast-wrap" id="toastWrap"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
